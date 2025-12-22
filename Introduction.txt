@@ -1,0 +1,78 @@
+Traditional programming: Input + Logic rules => Output
+(Meaning, we give the computer the inputs, 
+and the logic rules based on which to create specific outputs)
+
+ML and DL: Input + Output => the relationship between In-Out, the pattern to apply for future predictions.
+(Meaning we give the computer the inputs and the outputs, 
+then ask it to find the relationship pattern between In and Out,
+then use that pattern for future prediction)
+
+RULE: if you can build a simple rule-based system that does not require ML, DO THAT!!!
+(ML and DL are not the solutions for everything!!!)
+
+################################
+
+What is DL good for?
+
+1. Problems with long lists of rules, especially when traditional approach fails
+   (For example, the rules for driving a car are so complicated that the traditional approach could not handle)
+
+2. Continually changing environments: DL can adapt (learn) to new scenarios
+   (For example, we can be familiar without our town, but to the next town, not.... DL can learn to adapt the new town)
+
+3. Discovering insights withing large collections of data:
+   (How to differentiate between 1001 different foods using brute human strength? DL can do)
+
+################################
+
+What is DL not good for?
+
+1. When you need explainability: the patterns learned by a DL could be millions and even billions...
+
+2. When the traditional approach is a better option
+
+3. When errors are unacceptable: outputs of DL model aren't always predictable, they are based on
+   probabilistic errors. If your task does not accept that, go back to traditional programming
+
+4. When you don't have much data: DL requires a fairly large amount of data to produce great results
+
+################################
+
+ML vs DL?
+
+ML works well on structured data like tabular data with rows and columns, numeric, string
+=> best of ML is XGBoost
+
+DL works well on unstructred data like images, audio, natural languages, ...
+
+################################
+
+DL models are built on neural network architectures.
+What is neural network (NN)? Check out 3Blue1brown, StatsQuest
+
+NN anatomy: Input layer (data) -> Hidden layers (learn) -> Output layer (out)
+
+Each layer is composed of a Linear(strait line) and Non-linear (not-straight line) functions
+
+Before training a NN, must encode/embedd the data into numeric types.
+
+Then, NN will learn patterns, features, weights, ....
+(patterns, embedding, weights, feature representation, feature vectors -> similar things)
+
+Raw Inputs -> Numerical encoding -> NN learn -> representation outputs -> "human" outputs
+
+###############################
+
+Types of learning:
++ Supervised Learning: Input + Output (labels, supervisors) -> find relationship between In-Out
++ Unsupervised Learning: have Input but no output -> find patterns, cluster data into different groups
++ Transfer Learning: start with a trained model, and train it to do task with new data
++ Reinforcement Learning: give rewards towards wanted action to force model adapt to produce that action more often
+
+###############################
+
+Applications of DL
++ Recommendation system
++ Translation
++ Speech recognition
++ Computer vision
