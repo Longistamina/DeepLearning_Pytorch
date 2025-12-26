@@ -2,6 +2,8 @@
 1. Data preparation
 
 2. Build Model!!!!!
+
+3. Call out and inspect Model
 '''
 
 import torch
@@ -98,11 +100,101 @@ class LinearRegressionModel(nn.Module): # nn.Module is the base class for all ne
     
     def __init__(self):
         super().__init__()
-        self.coefs = nn.Parameter(torch.randn(size=1, requires_grad=True, dtype=torch.float32)) # initialize self.coefs as a random number
-        self.bias = nn.Parameter(torch.randn(size=1, requires_grad=True, dtype=torch.float32)) # initialize self.bias as a random number
+        self.coefs = nn.Parameter(torch.randn(size=(1, ), requires_grad=True, dtype=torch.float32)) # initialize self.coefs as a random number
+        self.bias = nn.Parameter(torch.randn(size=(1, ), requires_grad=True, dtype=torch.float32)) # initialize self.bias as a random number
         
         
     # Forward method define the computation in the model
     # If you subclass nn.Module above, then should always overwrite forward()
-    def forward(self, x: torch.Tensor) -> torch.Tensor: # Takes x as input (expected torch.Tensor), and also returns torch.Tensor as output
-        return self.weights*x + self.bias
+    def forward(self, X: torch.Tensor) -> torch.Tensor: # Takes X as input (expected torch.Tensor), and also returns torch.Tensor as output
+        return self.coefs*X + self.bias
+    
+
+#---------------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------- 3. Call out and inspect the Model -----------------------------------------------#
+#---------------------------------------------------------------------------------------------------------------------------#
+
+'''Create a random seed to make parameters reproducible'''
+torch.manual_seed(42)
+
+'''Create an instance of the model (this is a subclass of nn.Module)'''
+model_0 = LinearRegressionModel()
+
+'''Check out the parameters (must wrap model.parameters() inside a list() to display)'''
+print(list(model_0.parameters()))
+# [Parameter containing:
+# tensor([0.3367], requires_grad=True), Parameter containing:
+# tensor([0.1288], requires_grad=True)]
+
+'''Use model.state_dict() to display also the names of parameters'''
+print(model_0.state_dict())
+# OrderedDict({'coefs': tensor([0.3367]), 'bias': tensor([0.1288])})
+
+'''Use torch.inference_mode() to make pre-training predictions with initial random parameters'''
+X_test, y_test = next(iter(test_set)) # Get X and y from the first batch in test_set
+
+with torch.inference_mode():
+    y_preds = model_0(X_test) # The model will feed X_test into the forward() method to do computing
+                              # y_preds = self.coefs*X + self.bias
+print(y_preds)
+# tensor([[2.1659],
+#         [1.7647],
+#         [3.8870],
+#         [4.3999],
+#         [1.9160],
+#         [4.3268],
+#         [3.6682],
+#         [2.8118],
+#         [1.4676],
+#         [2.4319],
+#         [2.4145],
+#         [2.0905],
+#         [4.4410],
+#         [2.5673],
+#         [3.2276],
+#         [2.1048]])
+
+'''Put y_preds and y_test inside a dataframe for comparison'''
+import polars as pl
+
+df_preds_test = pl.DataFrame(
+    {
+        "y_preds": y_preds.squeeze().cpu().numpy(),
+        "y_test": y_test.cpu().numpy()
+    }
+)
+
+print(df_preds_test)
+# shape: (16, 2)
+# ┌──────────┬────────────┐
+# │ y_preds  ┆ y_test     │
+# │ ---      ┆ ---        │
+# │ f32      ┆ f32        │
+# ╞══════════╪════════════╡
+# │ 2.165875 ┆ 121.818878 │
+# │ 1.764662 ┆ 113.004158 │
+# │ 3.887038 ┆ 146.144577 │
+# │ 4.399948 ┆ 152.599579 │
+# │ 1.915996 ┆ 116.432655 │
+# │ …        ┆ …          │
+# │ 2.09052  ┆ 132.405777 │
+# │ 4.441008 ┆ 150.005478 │
+# │ 2.56734  ┆ 128.960205 │
+# │ 3.227596 ┆ 133.389664 │
+# │ 2.104839 ┆ 123.967117 │
+# └──────────┴────────────┘
+
+'''Plot the y_test and y_preds'''
+import matplotlib.pyplot as plt
+import seaborn as sbn
+
+sbn.scatterplot(x=X_test.squeeze().cpu().numpy(), y=df_preds_test['y_test'], label='y_test')
+sbn.scatterplot(x=X_test.squeeze().cpu().numpy(), y=df_preds_test['y_preds'], label='y_preds')
+plt.xlabel("X")
+plt.ylabel('y')
+plt.show()
+
+'''
+As we can see, before training, the predictions are very poor.
+=> Must train the model to update its coefs and bias (parameters) for better predictions
+'''
