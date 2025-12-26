@@ -1,11 +1,11 @@
 '''
-1. Prepare Data and Model
+0. Prepare Data and Model
 
-2. Loss function
+1. Loss function
 
-3. Optimizer
+2. Optimizer
 
-4. Training Loop
+3. Training Loop
 '''
 
 import torch
@@ -15,7 +15,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 #--------------------------------------------------------------------------------------------------------------------#
-#----------------------------------------- 1. Prepare Data and Model  -----------------------------------------------#
+#----------------------------------------- 0. Prepare Data and Model  -----------------------------------------------#
 #--------------------------------------------------------------------------------------------------------------------#
 
 #################################
@@ -92,7 +92,7 @@ model.to(device)
 
 
 #----------------------------------------------------------------------------------------------------------#
-#----------------------------------------- 2. Loss function -----------------------------------------------#
+#----------------------------------------- 1. Loss function -----------------------------------------------#
 #----------------------------------------------------------------------------------------------------------#
 '''
 Loss function is a function measures how poor the model performs.
@@ -115,7 +115,7 @@ print(loss_fn)
 
 
 #------------------------------------------------------------------------------------------------------#
-#----------------------------------------- 3. Optimizer -----------------------------------------------#
+#----------------------------------------- 2. Optimizer -----------------------------------------------#
 #------------------------------------------------------------------------------------------------------#
 '''
 Optimizer will take into account the loss function and try to optimize it.
@@ -139,7 +139,7 @@ optimizer = torch.optim.SGD(
 
 
 #----------------------------------------------------------------------------------------------------------#
-#----------------------------------------- 4. Training Loop -----------------------------------------------#
+#----------------------------------------- 3. Training Loop -----------------------------------------------#
 #----------------------------------------------------------------------------------------------------------#
 '''
 A couple of things we need in a training loop:
@@ -152,24 +152,24 @@ A couple of things we need in a training loop:
     5. Optimizer step (gradient descent): use the optimizer to adjust our model's parameters to try and improve the loss
 '''
 
-# Set model to training mode (set all params that require gradients to require gradients)
-# Do this before running the training loop
-model.train() 
-
 # Set the number of epocsh (A total "one pass through the data")
 epochs = 10
 
 # 0. Loop through the data
 for epoch in range(epochs):
+    print("+"*50)
+    
+    # Set model to training mode (set all params that require gradients to require gradients)
+    _ = model.train() # Assign to '_' to hide the class name printout
     
     # Create an inner loop to iterate over the train_set (a DataLoader object)
     for X_batch, y_batch in train_set:
         
         # 1. Forward pass (using the batch of features)
-        y_preds = model(X_batch)
+        y_preds = model(X_batch).squeeze() # Squeeze to make y_preds dimension the same as y_batch
         
         # 2. Calculate the loss (comparing batch predictions to batch truth values)
-        loss = loss_fn(y_preds, y_batch)
+        loss = loss_fn(y_preds, y_batch) 
         
         # 3. Optimizer zero grad (clear the old gradient step of the previous loop)
         optimizer.zero_grad()
@@ -181,7 +181,6 @@ for epoch in range(epochs):
         optimizer.step()
     
     # Print out the loss of each epoch (to see how the loss descends)
-    print("+"*50)
     print(f"Epoch: {epoch + 1}")
     print(f"Loss: {loss:.2f}")
 
