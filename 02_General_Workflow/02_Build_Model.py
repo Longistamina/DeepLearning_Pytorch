@@ -9,6 +9,8 @@
 import torch
 import numpy as np
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 #-------------------------------------------------------------------------------------------------------------#
 #----------------------------------------- 1. Data preparation -----------------------------------------------#
@@ -22,7 +24,7 @@ np.random.seed(24)
 X = torch.tensor(
         np.random.uniform(low=1, high=11, size=(200, 1)),
         dtype=torch.float32,
-        device='cpu'
+        device=device
     ).sort(dim=0).values
 
 torch.manual_seed(24)
@@ -36,7 +38,7 @@ np.random.seed(25)
 y = torch.tensor(
         np.random.uniform(low=100, high=150, size=(200,)),
         dtype=torch.float32,
-        device='cpu'
+        device=device
     ).sort(dim=0).values
 
 torch.manual_seed(25)
@@ -103,6 +105,10 @@ torch.manual_seed(42)
 
 '''Create an instance of the model (this is a subclass of nn.Module)'''
 model = LinearRegressionModel()
+
+'''Put model into available device ("cuda" or "cpu")'''
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
 
 '''Check out the parameters (must wrap model.parameters() inside a list() to display)'''
 print(list(model.parameters()))
