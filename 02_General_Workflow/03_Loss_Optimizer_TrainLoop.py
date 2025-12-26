@@ -11,6 +11,8 @@
 import torch
 import numpy as np
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 #--------------------------------------------------------------------------------------------------------------------#
 #----------------------------------------- 1. Prepare Data and Model  -----------------------------------------------#
@@ -24,7 +26,7 @@ np.random.seed(24)
 X = torch.tensor(
         np.random.uniform(low=1, high=11, size=(200, 1)),
         dtype=torch.float32,
-        device='cpu'
+        device=device
     ).sort(dim=0).values
 
 torch.manual_seed(24)
@@ -38,7 +40,7 @@ np.random.seed(25)
 y = torch.tensor(
         np.random.uniform(low=100, high=150, size=(200,)),
         dtype=torch.float32,
-        device='cpu'
+        device=device
     ).sort(dim=0).values
 
 torch.manual_seed(25)
@@ -86,6 +88,7 @@ class LinearRegressionModel(nn.Module):
 
 torch.manual_seed(42)
 model = LinearRegressionModel()
+model.to(device)
 
 
 #----------------------------------------------------------------------------------------------------------#
@@ -131,7 +134,7 @@ https://docs.pytorch.org/docs/stable/optim.html
 '''Set up an optimizer: use SGD (stochastic gradient descent)'''
 optimizer = torch.optim.SGD(
     params=model.parameters(), # Parameters of the model that need to be optimized
-    lr=0.001,                  # The higher the learning rate, the more the parameters will be adjusted after every training step
+    lr=2e-5,                   # The higher the learning rate, the more the parameters will be adjusted after every training step
 )
 
 
@@ -149,12 +152,15 @@ A couple of things we need in a training loop:
     5. Optimizer step (gradient descent): use the optimizer to adjust our model's parameters to try and improve the loss
 '''
 
-# A total "one pass through the data"
+# Set model to training mode (set all params that require gradients to require gradients)
+# Do this before running the training loop
+model.train() 
+
+# Set the number of epocsh (A total "one pass through the data")
 epochs = 10
 
 # 0. Loop through the data
 for epoch in range(epochs):
-    model.train() # Set model to training mode (set all params that require gradients to require gradients)
     
     # Create an inner loop to iterate over the train_set (a DataLoader object)
     for X_batch, y_batch in train_set:
@@ -173,4 +179,41 @@ for epoch in range(epochs):
         
         # 5. Optimizer step (perform gradient descent with new calculated step, to adjust the parameters)
         optimizer.step()
-        
+    
+    # Print out the loss of each epoch (to see how the loss descends)
+    print("+"*50)
+    print(f"Epoch: {epoch + 1}")
+    print(f"Loss: {loss:.2f}")
+
+'''
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 1
+Loss: 119.46
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 2
+Loss: 114.42
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 3
+Loss: 112.00
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 4
+Loss: 112.14
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 5
+Loss: 115.46
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 6
+Loss: 112.91
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 7
+Loss: 116.80
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 8
+Loss: 113.67
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 9
+Loss: 117.41
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 10
+Loss: 117.88
+'''
