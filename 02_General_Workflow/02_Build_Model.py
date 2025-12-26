@@ -28,18 +28,6 @@ X = torch.tensor(
 torch.manual_seed(24)
 X += torch.normal(mean=2.5, std=1, size=(200, 1)) # Add variation
 
-print(X[:10])
-# tensor([[1.9797],
-#         [3.2454],
-#         [3.3088],
-#         [2.5079],
-#         [5.9215],
-#         [3.3124],
-#         [4.8586],
-#         [2.3132],
-#         [4.7322],
-#         [4.9559]])
-
 #################################
 ## Create y in ascending order ##
 #################################
@@ -53,10 +41,6 @@ y = torch.tensor(
 
 torch.manual_seed(25)
 y += torch.normal(mean=10, std=1, size=(200,)) # Add variation
-
-print(y[:10])
-# tensor([110.4176, 110.1430, 111.1111, 109.7773, 110.7190, 112.1797, 113.0042,
-#         112.2051, 113.8155, 111.9879])
 
 ##########################
 ## Train-Val-Test split ##

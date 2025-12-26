@@ -30,18 +30,6 @@ X = torch.tensor(
 torch.manual_seed(24)
 X += torch.normal(mean=2.5, std=1, size=(200, 1)) # Add variation
 
-print(X[:10])
-# tensor([[1.9797],
-#         [3.2454],
-#         [3.3088],
-#         [2.5079],
-#         [5.9215],
-#         [3.3124],
-#         [4.8586],
-#         [2.3132],
-#         [4.7322],
-#         [4.9559]])
-
 #################################
 ## Create y in ascending order ##
 #################################
@@ -55,10 +43,6 @@ y = torch.tensor(
 
 torch.manual_seed(25)
 y += torch.normal(mean=10, std=1, size=(200,)) # Add variation
-
-print(y[:10])
-# tensor([110.4176, 110.1430, 111.1111, 109.7773, 110.7190, 112.1797, 113.0042,
-#         112.2051, 113.8155, 111.9879])
 
 ##########################
 ## Train-Val-Test split ##
@@ -159,8 +143,34 @@ A couple of things we need in a training loop:
     0. Loop through the data
     1. Forward pass: this involes data moving through the 'forward()' method
     2. Calculate the loss: compare the predictions made by 'forward()' to ground truth values/labels
-    3. Optimizer zero grad
+    3. Optimizer zero grad: clear the old gradient step of the previous batch
     4. Loss backward (backpropagation): move backwards through the network 
                                         to calculate the gradients of each of the model's parameters with respect to the loss
-    5. Optimizer step: use the optimizer to adjust our model's parameters to try and improve the loss
+    5. Optimizer step (gradient descent): use the optimizer to adjust our model's parameters to try and improve the loss
 '''
+
+# A total "one pass through the data"
+epochs = 10
+
+# 0. Loop through the data
+for epoch in range(epochs):
+    model.train() # Set model to training mode (set all params that require gradients to require gradients)
+    
+    # Create an inner loop to iterate over the train_set (a DataLoader object)
+    for X_batch, y_batch in train_set:
+        
+        # 1. Forward pass (using the batch of features)
+        y_preds = model(X_batch)
+        
+        # 2. Calculate the loss (comparing batch predictions to batch truth values)
+        loss = loss_fn(y_preds, y_batch)
+        
+        # 3. Optimizer zero grad (clear the old gradient step of the previous loop)
+        optimizer.zero_grad()
+        
+        # 4. Loss backward (perform backpropagation, calculate fresh gradient step for this batch)
+        loss.backward()
+        
+        # 5. Optimizer step (perform gradient descent with new calculated step, to adjust the parameters)
+        optimizer.step()
+        

@@ -147,7 +147,7 @@ print(val_set)
 ## Use iter(set) with for loop to display ##
 ############################################
 
-for batch in iter(val_set):
+for batch in val_set:
     print(batch)
 # [tensor([[ 6.8403],
 #         [14.0849],
