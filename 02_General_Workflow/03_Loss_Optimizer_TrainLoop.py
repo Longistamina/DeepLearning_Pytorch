@@ -155,7 +155,6 @@ epochs = 10
 
 # 0. Loop through the data
 for epoch in range(epochs):
-    print("+"*50)
     
     # Set model to training mode (set all params that require gradients to require gradients)
     _ = model.train() # Assign to '_' to hide the class name printout
@@ -179,6 +178,7 @@ for epoch in range(epochs):
         optimizer.step()
     
     # Print out the loss of each epoch (to see how the loss descends)
+    print("+"*50)
     print(f"Epoch: {epoch + 1}")
     print(f"Loss: {loss:.2f}")
 

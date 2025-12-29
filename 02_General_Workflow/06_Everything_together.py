@@ -125,7 +125,6 @@ epochs = 10
 train_loss_list, val_loss_list = [], []
 
 for epoch in range(epochs):
-    print("+"*50)
     # --- TRAINING ---
     _ = model.train() # Turn on training mode, enable gradient tracking
     for X_batch, y_batch in train_set:
@@ -147,50 +146,34 @@ for epoch in range(epochs):
     
     avg_val_loss = val_loss / len(val_set)
     
-    print(f"Epoch: {epoch + 1}")
-    print(f"Train loss: {loss:.4f}")
-    print(f"Validation loss: {avg_val_loss:.4f}")
-    
     train_loss_list.append(loss.item())
     val_loss_list.append(avg_val_loss)
     
+    if (epoch-1) % 2 == 0:
+        print("+"*50)
+        print(f"Epoch: {epoch + 1}")
+        print(f"Train loss: {loss:.4f}")
+        print(f"Validation loss: {avg_val_loss:.4f}")
+    
+
+    
 '''
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 1
-Train loss: 3835.8940
-Validation loss: 2947.0026
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 2
 Train loss: 338.6355
 Validation loss: 404.5150
 ++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 3
-Train loss: 333.9245
-Validation loss: 576.4692
-++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 4
 Train loss: 108.6674
 Validation loss: 174.4145
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 5
-Train loss: 113.9557
-Validation loss: 81.7076
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 6
 Train loss: 94.9725
 Validation loss: 40.6029
 ++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 7
-Train loss: 20.5368
-Validation loss: 31.8919
-++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 8
 Train loss: 8.6370
 Validation loss: 33.2744
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 9
-Train loss: 41.5429
-Validation loss: 55.9340
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 10
 Train loss: 25.2029
