@@ -143,18 +143,18 @@ model.to(device)
 # print(f'\nParameters before training:\n{model.state_dict()}')
 # .....
 
-########################
-## Loss and Optimizer ##
-########################
+##################################
+## Loss - Optimizer - Scheduler ##
+##################################
 
 loss_fn = nn.SmoothL1Loss()
 
 optimizer = torch.optim.Adam(
     params=model.parameters(), 
-    lr=1
+    lr=0.01
 )
 
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
 ################################
 ## Training - Validating loop ##
@@ -190,30 +190,167 @@ for epoch in range(1, epochs+1, 1):
     
     scheduler.step()
     
-    if epoch % 20 == 0:
+    if epoch % 10 == 0:
         print("+"*50)
         print(f"Epoch: {epoch}")
         print(f"Train loss: {loss:.3e}")
         print(f"Validation loss: {avg_val_loss:.3e}")
 '''
 ++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 10
+Train loss: 7.284e-02
+Validation loss: 4.741e-02
+++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 20
-Train loss: 1.230e-01
-Validation loss: 1.276e-01
+Train loss: 6.587e-02
+Validation loss: 6.457e-02
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 30
+Train loss: 5.257e-02
+Validation loss: 7.061e-02
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 40
-Train loss: 1.634e-01
-Validation loss: 1.082e-01
+Train loss: 6.239e-02
+Validation loss: 7.588e-02
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 50
+Train loss: 7.191e-02
+Validation loss: 1.074e-01
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 60
-Train loss: 1.553e-01
-Validation loss: 1.064e-01
+Train loss: 8.633e-02
+Validation loss: 6.086e-02
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 70
+Train loss: 6.222e-02
+Validation loss: 8.610e-02
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 80
-Train loss: 1.412e-01
-Validation loss: 1.590e-01
+Train loss: 5.920e-02
+Validation loss: 7.495e-02
+++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 90
+Train loss: 5.147e-02
+Validation loss: 5.349e-02
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 100
-Train loss: 1.817e-01
-Validation loss: 1.366e-01
+Train loss: 6.496e-02
+Validation loss: 6.314e-02
 '''
+
+#######################################
+## Drawing Train and Val loss curves ##
+#######################################
+
+def plot_train_val_loss_curves():
+    import plotly.graph_objects as pgo
+    import numpy as np
+    
+    # 1. Define the X-axis (epochs)
+    epoch_axis = np.arange(1, epochs + 1, 1)
+
+    fig = pgo.Figure()
+
+    # 2. Add Training Loss
+    fig.add_trace(pgo.Scatter(
+        x=epoch_axis,
+        y=train_loss_list,
+        mode='lines+markers',
+        name='Train Loss',
+        line=dict(color='#1f77b4', width=3),
+        marker=dict(size=8)
+    ))
+
+    # 3. Add Validation Loss
+    fig.add_trace(pgo.Scatter(
+        x=epoch_axis,
+        y=val_loss_list,
+        mode='lines+markers',
+        name='Val Loss',
+        line=dict(color='#ff7f0e', width=3, dash='dash'),
+        marker=dict(size=8, symbol='square')
+    ))
+
+    # 4. Layout & Styling
+    fig.update_layout(
+        title='<b>Model Training Progress</b>',
+        xaxis_title='Epoch',
+        yaxis_title='Loss Value',
+        template='plotly_dark', # Clean dark background
+        hovermode='x unified',   # Shows both values on hover
+        legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99)
+    )
+
+    fig.show()
+    
+plot_train_val_loss_curves()
+
+#############
+## Testing ##
+#############
+
+test_loss_scaled = 0
+test_preds_list = []
+test_targets_list = []
+
+_ = model.eval()
+
+with torch.inference_mode():
+    for X_test, y_test in test_set:
+        test_preds = model(X_test)
+        
+        # Accumulate scaled loss
+        test_loss_scaled += loss_fn(test_preds, y_test).item()
+        
+        # Collect predictions and targets for inverse transform
+        test_preds_list.append(test_preds)
+        test_targets_list.append(y_test)
+
+# Calculate average scaled loss
+avg_test_loss_scaled = test_loss_scaled / len(test_set)
+
+# Concatenate all batches
+test_preds_scaled = torch.cat(test_preds_list, dim=0)
+test_targets_scaled = torch.cat(test_targets_list, dim=0)
+
+# Inverse transform predictions and targets (not the loss!)
+test_preds_original = y_scaler.inverse_transform(test_preds_scaled.cpu().numpy())
+test_targets_original = y_scaler.inverse_transform(test_targets_scaled.cpu().numpy())
+
+# Now calculate metrics in original scale (dollars)
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+mae_original = mean_absolute_error(test_targets_original, test_preds_original)
+rmse_original = np.sqrt(mean_squared_error(test_targets_original, test_preds_original))
+r2 = r2_score(test_targets_original, test_preds_original)
+
+print("="*50)
+print("Test Set Performance:")
+print(f"Scaled Loss (SmoothL1): {avg_test_loss_scaled:.3e}")
+print(f"MAE (Original $): ${mae_original:,.2f}")
+print(f"RMSE (Original $): ${rmse_original:,.2f}")
+print(f"R² Score: {r2:.4f}")
+print("="*50)
+
+# ==================================================
+# Test Set Performance:
+# Scaled Loss (SmoothL1): 4.237e-02
+# MAE (Original $): $35,606.31
+# RMSE (Original $): $50,719.14
+# R² Score: 0.7986
+# ==================================================
+
+############
+## Saving ##
+############
+
+from pathlib import Path
+
+MODEL_PATH = Path("03_ArtificialNeuralNetwork_ANN").joinpath("save")
+MODEL_PATH.mkdir(parents=True, exist_ok=True)
+
+# PyTorch model can be saved in .pth or .pt format
+PARAMS_NAME = "ANN_regressor.pth"
+
+# Save the model (use model.state_dict() to save only the parameters)
+torch.save(obj=model.state_dict(), f=MODEL_PATH.joinpath(PARAMS_NAME))
