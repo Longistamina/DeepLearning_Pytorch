@@ -118,12 +118,13 @@ class ANNmodel(nn.Module):
         '''Use nn.Sequential() to put our layers together'''
         self.main = nn.Sequential(
             
-            # Layer 1: 12 inputs -> 64 neurons (use nn.ReLU() as activation since median_house_value is non-negative)
+            # Layer 1: 12 inputs -> 64 neurons (upscale from 12 features to 64 features)
+            # use nn.ReLU() as activation since median_house_value is non-negative
             nn.Linear(in_features=12, out_features=64),
             nn.BatchNorm1d(64), # Normalize
             nn.ReLU(),
             
-            # Layer 2: 64 neurons -> 32 neurons
+            # Layer 2: 64 neurons -> 32 neurons (downscale from 64 features to 32 features)
             nn.Linear(64, 32),
             nn.BatchNorm1d(32), # Normalize
             nn.ReLU(),
