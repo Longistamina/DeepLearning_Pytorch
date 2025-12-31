@@ -296,7 +296,7 @@ plot_train_val_loss_curves()
 
 test_loss_scaled = 0
 test_preds_list = []
-test_targets_list = []
+test_true_list = []
 
 _ = model.eval()
 
@@ -307,27 +307,27 @@ with torch.inference_mode():
         # Accumulate scaled loss
         test_loss_scaled += loss_fn(test_preds, y_test).item()
         
-        # Collect predictions and targets for inverse transform
+        # Collect predictions and true for inverse transform
         test_preds_list.append(test_preds)
-        test_targets_list.append(y_test)
+        test_true_list.append(y_test)
 
 # Calculate average scaled loss
 avg_test_loss_scaled = test_loss_scaled / len(test_set)
 
 # Concatenate all batches
 test_preds_scaled = torch.cat(test_preds_list, dim=0)
-test_targets_scaled = torch.cat(test_targets_list, dim=0)
+test_true_scaled = torch.cat(test_true_list, dim=0)
 
-# Inverse transform predictions and targets (not the loss!)
+# Inverse transform predictions and true (not the loss!)
 test_preds_original = y_scaler.inverse_transform(test_preds_scaled.cpu().numpy())
-test_targets_original = y_scaler.inverse_transform(test_targets_scaled.cpu().numpy())
+test_true_original = y_scaler.inverse_transform(test_true_scaled.cpu().numpy())
 
 # Now calculate metrics in original scale (dollars)
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-mae_original = mean_absolute_error(test_targets_original, test_preds_original)
-rmse_original = np.sqrt(mean_squared_error(test_targets_original, test_preds_original))
-r2 = r2_score(test_targets_original, test_preds_original)
+mae_original = mean_absolute_error(test_true_original, test_preds_original)
+rmse_original = np.sqrt(mean_squared_error(test_true_original, test_preds_original))
+r2 = r2_score(test_true_original, test_preds_original)
 
 print("="*50)
 print("Test Set Performance:")
@@ -349,7 +349,7 @@ print(
     pl.DataFrame(
         {
             "House_preds": test_preds_original.squeeze(),
-            "House_truth": test_targets_original.squeeze()
+            "House_truth": test_true_original.squeeze()
         }
     )
 )
@@ -375,12 +375,12 @@ print(
 import matplotlib.pyplot as plt
 import seaborn as sbn
 
-y_test = test_targets_original.squeeze()
-y_test_pred = test_preds_original.squeeze()
+y_test_true = test_true_original.squeeze()
+y_test_preds = test_preds_original.squeeze()
 
 sbn.set_theme(style='darkgrid')
-sbn.lineplot(x = [y_test.min(), y_test.max()], y = [y_test.min(), y_test.max()], label = 'Reference line', color = 'green')
-sbn.scatterplot(x = y_test, y = y_test_pred)
+sbn.lineplot(x = [y_test_true.min(), y_test_true.max()], y = [y_test_true.min(), y_test_true.max()], label = 'Reference line', color = 'green')
+sbn.scatterplot(x = y_test_true, y = y_test_preds)
 plt.xlabel("Y_test_true", size=15)
 plt.ylabel("Y_test_predict", size=15)
 plt.show()
