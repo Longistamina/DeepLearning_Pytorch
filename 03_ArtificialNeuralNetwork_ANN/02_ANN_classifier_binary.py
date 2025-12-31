@@ -429,8 +429,6 @@ fig.update_yaxes(title_text="True Positive Rate", row=1, col=2)
 
 # Update overall layout with darker theme
 fig.update_layout(
-    height=500,
-    width=1400,
     showlegend=True,
     template='plotly_dark',  # Dark theme
     legend=dict(
