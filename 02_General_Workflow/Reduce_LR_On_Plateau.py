@@ -10,7 +10,7 @@ mode='min' ->  lr will be reduced when the quantity monitored (loss) has stopped
 ################
 
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-scheduler = ReduceLROnPlateau(optimizer, mode="min", patience=5)
+scheduler = ReduceLROnPlateau(optimizer, mode="min", patience=5, factor=0.1)
 
 for epoch in epoch:
     _ = model.train()
@@ -26,6 +26,4 @@ for epoch in epoch:
     print(f"Current lr: {current_lr}")
     
 ##################
-
-
 '''
