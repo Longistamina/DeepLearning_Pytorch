@@ -393,7 +393,7 @@ plt.show()
 
 from pathlib import Path
 
-MODEL_PATH = Path("03_ArtificialNeuralNetwork_ANN").joinpath("save")
+MODEL_PATH = Path("03_ANN_MLP").joinpath("save")
 MODEL_PATH.mkdir(parents=True, exist_ok=True)
 
 # PyTorch model can be saved in .pth or .pt format
