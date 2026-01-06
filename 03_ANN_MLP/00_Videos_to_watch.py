@@ -21,4 +21,22 @@ https://www.youtube.com/watch?v=iyn2zdALii8&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-
 
 7. Backpropagation (optimize ALL parameters of a neural network simultaneously):
 https://www.youtube.com/watch?v=GKZoOHXGcLo&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=7
+
+8. Activation function (ReLU):
+https://www.youtube.com/watch?v=68BZ5f7P94E&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=8
+
+9. Multiple inputs and outputs:
+https://www.youtube.com/watch?v=83LYR-1IcjA&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=9
+
+10. ArgMax and SoftMax:
+https://www.youtube.com/watch?v=KpKog-L9veg&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=10
+
+11. Softmax Derivative (step-by-step):
+https://www.youtube.com/watch?v=M59JElEPgIg&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=11
+
+12. Cross Entroypy:
+https://www.youtube.com/watch?v=6ArSys5qHAU&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=12
+
+13. Cross Entropy derivative and backpropagation:
+https://www.youtube.com/watch?v=xBEh66V9gZo&list=PLblh5JKOoLUIxGDQs4LFFD--41Vzf-ME1&index=13
 '''
