@@ -40,69 +40,49 @@ print(device)
 ## Dataset downloading ##
 #########################
 '''
-Import CIFAR-10 dataset from HuggingFace
+Import Animals-10 dataset with more than 23k images from HuggingFace
 Run this first in terminal: pip install datasets
 '''
 
 from datasets import load_dataset
 
-train_set = load_dataset(
-    'cifar10',
-    split='train', # Download the training set
-    verification_mode='basic_checks'  # checks if the data files exist and verifies basic metadata
-)
-print(train_set)
+# Load dataset from huggingface
+animals_10 = load_dataset(path="Rapidata/Animals-10", split="train")
+
+# Print the structure
+print(animals_10)
 # Dataset({
-#     features: ['img', 'label'],
-#     num_rows: 50000
+#     features: ['image', 'label'],
+#     num_rows: 23554
 # })
 
-val_set =  load_dataset(
-    'cifar10',
-    split='test', # Download the training set
-    verification_mode='basic_checks'  # checks if the data files exist and verifies basic metadata
-)
-print(val_set)
-# Dataset({
-#     features: ['img', 'label'],
-#     num_rows: 10000
-# })
+# Show an image
+animals_10['image'][1000]
 
-# View an image
-train_set[0]['img']
-
-print(train_set[0]['img'])
+print(animals_10[1000]['image'])
 # <PIL.PngImagePlugin.PngImageFile image mode=RGB size=32x32 at 0x7A2EBA2F0410>
 
 #########################
-## Image preprocessing ##
+## Image Preprocessing ##
 #########################
 
-IMG_SIZE = 32
-'''
-Most CNNs are designed to only accept images of a fixed size
-=> Must fix the IMG_SIZE, and reshape the input to adapt this norm.
-'''
+IMG_SIZE = 224
 
-#----
-## Build preprocess transforms
-#----
+#--------
+## Initial preprocessing
+#--------
 
 preprocess = transforms.Compose(
     [
-        transforms.Resize((IMG_SIZE, IMG_SIZE)), # Resize the input image to a given size (IMG_SIZE, IMG_SIZE)
-        transforms.ToTensor()                  # Convert to tensor (and also convert to [0, 1] tensors)
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.ToTensor()
     ]
 )
 
-#----
-## Change from grayscale to RGB, and apply preprocess
-#----
+inputs_temp = []
 
-inputs_train = []
-
-for record in tqdm(iterable=train_set, desc="Preprocessing Images"):
-    image = record['img']
+for record in tqdm(iterable=animals_10, desc="Preprocessing Images"):
+    image = record['image']
     label = record['label']
     
     # Convert from grayscale to RGB (3-colour channels)
@@ -113,68 +93,44 @@ for record in tqdm(iterable=train_set, desc="Preprocessing Images"):
     input_tensor = preprocess(image)
     label_tensor = torch.tensor(label)
     
-    # append to inputs_train
-    inputs_train.append([input_tensor, torch.tensor(label)])
-
+    # append to inputs_temp
+    inputs_temp.append([input_tensor, torch.tensor(label)])
+    
 #----
-## Re-normalize the pixel values for train set
+## Calculate mean and std after inital preprocessing
 #----
-'''
-Since transforms.Tensor() normalizes all into [0, 1],
-we need to modify this normalization to fit this dataset.
-
-Doing so by calculating the mean and std for all images across separe 3 color channles
-then use transforms.Normalize(mean=, std=) with this calculated mean and std.
-'''
-
-# First, we need to calculate the mean and std for each of the RGB channels across all images
 
 import numpy as np
 
-# Choosing a random sample to calculate mean and std (this sample containing random 512 images)
 np.random.seed(0)
-idx = np.random.randint(0, len(inputs_train), 512)
+idx = np.random.randint(0, len(inputs_temp), 10000)
 
-# Concatenate this subset of images into a new tensor )tensor_placeholder)
-tensor_placeholder = torch.concat([inputs_train[i][0] for i in idx], axis=1)
+tensor_placeholder = torch.concat([inputs_temp[i][0] for i in idx], axis=1)
 print(tensor_placeholder.shape)
-# torch.Size([3, 16384, 32])
-'''
-we concatenate 512 images of size (3x32x32) (Channel*Height*Width) along the Height channel
-=> (3x16384x32), 16384=32*512
-'''
+# torch.Size([3, 2240000, 224])
 
-# Calculate the mean and std across all images, for separate channel
-mean_all = torch.mean(tensor_placeholder, dim=(1, 2)) # dim=(1, 2) meanin only uses Heigh*Width for calculation, ignore the channel
+mean_all = torch.mean(tensor_placeholder, dim=(1, 2))
 std_all = torch.std(tensor_placeholder, dim=(1, 2))
 
-print(mean_all) # tensor([0.4855, 0.4792, 0.4421])
-print(std_all) # tensor([0.2464, 0.2418, 0.2599])
+print(mean_all) # tensor([0.5210, 0.5053, 0.4184])
+print(std_all)  # tensor([0.2645, 0.2610, 0.2787])
 
-#### RE-NORMALIZE ###
-
-preprocess = transforms.Compose([transforms.Normalize(mean=mean_all, std=std_all)])
-
-for idx in tqdm(range(len(inputs_train))):
-    input_tensor = preprocess(inputs_train[idx][0])
-    inputs_train[idx][0] = input_tensor # replace with re-normalized tensor
-    
 #----
-## Re-normalize the pixel values for val set
+## Re-normalize with calculated mean and std
 #----
 
-preprocess_full = transforms.Compose(
+preprocess = transforms.Compose(
     [
-        transforms.Resize((IMG_SIZE, IMG_SIZE)), # Resize the input image to a given size (IMG_SIZE, IMG_SIZE)
-        transforms.ToTensor(),                  # Convert to tensor (and also convert to [0, 1] tensors)
-        transforms.Normalize(mean=mean_all, std=std_all) # Re-normalize with new mean and std
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean_all, std=std_all)
     ]
 )
 
-inputs_val = []
+inputs_final = []
 
-for record in tqdm(iterable=val_set, desc="Preprocessing Images"):
-    image = record['img']
+for record in tqdm(iterable=animals_10, desc="Preprocessing Images"):
+    image = record['image']
     label = record['label']
     
     # Convert from grayscale to RGB (3-colour channels)
@@ -182,20 +138,61 @@ for record in tqdm(iterable=val_set, desc="Preprocessing Images"):
         image = image.convert("RGB")
         
     # preprocessing
-    input_tensor = preprocess_full(image)
+    input_tensor = preprocess(image)
     label_tensor = torch.tensor(label)
     
-    # append to inputs_train
-    inputs_val.append([input_tensor, torch.tensor(label)])
+    # append to inputs_temp
+    inputs_final.append([input_tensor, torch.tensor(label)])
     
-################
-## Dataloader ##
-################
+del inputs_temp
+    
+#######################
+## Dataset splitting ##
+#######################
 
-BATCH_SIZE = 64
+#-----
+## Takes images and labels out
+#-----
 
-train_loader = torch.utils.data.DataLoader(inputs_train, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = torch.utils.data.DataLoader(inputs_val, batch_size=BATCH_SIZE, shuffle=False)
+images, labels = zip(*inputs_final)
+'''
+Work like this
+images = [item[0] for item in data_list]
+labels = [item[1] for item in data_list]
+'''
+
+images = torch.stack(images, dim=0) # X
+labels = torch.stack(labels, dim=0) # y
+
+print(images.shape) # torch.Size([23554, 3, 224, 224])
+print(labels.shape) # torch.Size([23554])
+
+#-----
+## Train - Val - Test split
+#-----
+
+train_len = int(0.7 * len(images)) # MUST be INTEGER
+val_len = int(0.15 * len(images))
+test_len = len(images) - (train_len + val_len)
+
+print(train_len, val_len, test_len)
+# 16487 3533 3534
+
+from torch.utils.data import DataLoader, TensorDataset, random_split
+
+full_dataset = TensorDataset(images, labels)
+
+train_split, val_split, test_split = random_split(dataset=full_dataset, lengths=[train_len, val_len, test_len])
+
+#-----
+## Train - Val - Test loader
+#-----
+
+BATCH_SIZE = 32
+
+train_set = DataLoader(train_split, batch_size=BATCH_SIZE, shuffle=True) # shuffle=True to reshuffle the data after every epoch
+val_set = DataLoader(val_split, batch_size=BATCH_SIZE, shuffle=False)
+test_set = DataLoader(test_split, batch_size=BATCH_SIZE, shuffle=False)
 
 ###################################
 ## Building AlexNet-inspired CNN ##
@@ -250,8 +247,10 @@ class AlexNet(nn.Module):
             # Block 5: conv -> relu -> max_pool
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-            
+            nn.MaxPool2d(kernel_size=3, stride=2)
+        )
+
+        self.fc = nn.Sequential(           
             # Convolutional and pooling layers output 4D tensors (Batch, Channels, Height, Width)
             # However, Fully Connected layers expect 2D tensors (Batch, Features)
             # => must FLATTEN the 4D tensor into a 2D tensor
@@ -259,8 +258,7 @@ class AlexNet(nn.Module):
                         
             # Block 6: drop_out -> fc_linear -> relu
             nn.Dropout(p=0.5),
-            nn.LazyLinear(512), # Automatically figures out input size (1024 -> 512)
-            # nn.Linear(1024, 512)
+            nn.LazyLinear(512), # Automatically figures out input size
             nn.ReLU(),
             
             # Block 7: drop_out -> fc_linear -> relu
@@ -275,6 +273,7 @@ class AlexNet(nn.Module):
         
     def forward(self, X):
         out = self.cnn(X)
+        out = self.fc(out)
         return out
 '''
 Block 1:
@@ -310,7 +309,7 @@ Formula for Conv2d output size:
 ## model initialization ##
 ##########################
 
-num_classes = len(set(train_set['label']))
+num_classes = len(animals_10.features['label'].names)
 print(num_classes) # 10
 
 torch.manual_seed(42)
@@ -329,20 +328,20 @@ loss_fn = nn.CrossEntropyLoss()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=10, factor=0.5)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=6, factor=0.5)
 
 ################################
 ## Training - Validating loop ##
 ################################
 
-epochs = 100
+epochs = 60
 
 train_loss_list, val_loss_list = [], []
 
 for epoch in tqdm(iterable=range(1, epochs+1), desc="Training"):
     # --- TRAINING ---
     _ = model.train() # Turn on training mode, enable gradient tracking
-    for _, (images, labels) in enumerate(train_loader):
+    for _, (images, labels) in enumerate(train_set):
         # moves values to device
         images = images.to(device)
         labels = labels.to(device)
@@ -360,7 +359,7 @@ for epoch in tqdm(iterable=range(1, epochs+1), desc="Training"):
     correct = 0
     total = 0
     with torch.inference_mode(): # 2. Turn off gradient tracking to save memory      
-        for _, (images, labels) in enumerate(val_loader): # 3. Iterate through val_set
+        for _, (images, labels) in enumerate(val_set): # 3. Iterate through val_set
             # moves values to device
             images = images.to(device)
             labels = labels.to(device)
@@ -378,7 +377,7 @@ for epoch in tqdm(iterable=range(1, epochs+1), desc="Training"):
         
           
     
-    avg_val_loss = val_loss / len(val_loader)
+    avg_val_loss = val_loss / len(val_set)
     avg_val_acc = 100 * (correct / total)  
     
     train_loss_list.append(loss.item())
@@ -389,79 +388,55 @@ for epoch in tqdm(iterable=range(1, epochs+1), desc="Training"):
     scheduler.step(avg_val_loss)
     
     if (epoch % 10 == 0) or (epoch == 1):
-        print("+"*50)
-        print(f"Epoch: {epoch}")
-        print(f"Train loss: {loss:.4f}")
-        print(f"Validation loss: {avg_val_loss:.4f}")
-        print(f"Validation accuracy: {avg_val_acc:.2f}%")
-        print(f"Current LR: {current_lr}")
+        tqdm.write("+"*50)
+        tqdm.write(f"Epoch: {epoch}")
+        tqdm.write(f"Train loss: {loss:.4f}")
+        tqdm.write(f"Validation loss: {avg_val_loss:.4f}")
+        tqdm.write(f"Validation accuracy: {avg_val_acc:.2f}%")
+        tqdm.write(f"Current LR: {current_lr}")
 '''
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 1
-Train loss: 1.6427
-Validation loss: 1.5276
-Validation accuracy: 41.09%
+Train loss: 2.2879
+Validation loss: 1.5544
+Validation accuracy: 46.19%
 Current LR: 0.0001
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 10
-Train loss: 0.0989
-Validation loss: 0.7442
-Validation accuracy: 76.26%
+Train loss: 0.7113
+Validation loss: 0.9376
+Validation accuracy: 73.34%
 Current LR: 0.0001
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 20
-Train loss: 0.1018
-Validation loss: 0.8777
-Validation accuracy: 79.50%
-Current LR: 0.0001
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 30
-Train loss: 0.0003
-Validation loss: 1.3520
-Validation accuracy: 80.24%
+Train loss: 0.0061
+Validation loss: 1.5476
+Validation accuracy: 75.06%
 Current LR: 5e-05
 ++++++++++++++++++++++++++++++++++++++++++++++++++
+Epoch: 30
+Train loss: 0.0001
+Validation loss: 1.7573
+Validation accuracy: 76.56%
+Current LR: 1.25e-05
+++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 40
-Train loss: 0.0045
-Validation loss: 1.5479
-Validation accuracy: 80.41%
-Current LR: 2.5e-05
+Train loss: 0.0000
+Validation loss: 1.8981
+Validation accuracy: 76.90%
+Current LR: 6.25e-06
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 50
-Train loss: 0.0000
-Validation loss: 1.7513
-Validation accuracy: 80.84%
-Current LR: 1.25e-05
+Train loss: 0.0009
+Validation loss: 1.9485
+Validation accuracy: 76.99%
+Current LR: 1.5625e-06
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 Epoch: 60
 Train loss: 0.0000
-Validation loss: 1.9143
-Validation accuracy: 81.06%
-Current LR: 6.25e-06
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 70
-Train loss: 0.0000
-Validation loss: 1.9788
-Validation accuracy: 81.18%
-Current LR: 3.125e-06
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 80
-Train loss: 0.0000
-Validation loss: 2.1361
-Validation accuracy: 81.04%
-Current LR: 1.5625e-06
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 90
-Train loss: 0.0000
-Validation loss: 2.1796
-Validation accuracy: 81.26%
+Validation loss: 1.9524
+Validation accuracy: 77.07%
 Current LR: 7.8125e-07
-++++++++++++++++++++++++++++++++++++++++++++++++++
-Epoch: 100
-Train loss: 0.0000
-Validation loss: 2.2243
-Validation accuracy: 81.45%
-Current LR: 3.90625e-07
 '''
 
 #######################################
@@ -511,55 +486,53 @@ def plot_train_val_loss_curves(epochs, train_loss_list, val_loss_list):
     
 plot_train_val_loss_curves(epochs, train_loss_list, val_loss_list)
 
-################################################
-## Confusion matrix and Classification report ##
-################################################
+#############
+## Testing ##
+#############
+
+class_names = animals_10.features['label'].names
 
 from sklearn.metrics import confusion_matrix, classification_report
 
 # 1. Put model in eval mode
-model.eval()
+_ = model.eval()
 all_preds = []
 all_labels = []
 
 with torch.inference_mode():
-    for images, labels in val_loader:
+    for images, labels in test_set:
         images = images.to(device)
         
         outputs = model(images)
         preds = torch.argmax(outputs, dim=1)
         
         all_preds.extend(preds.cpu().numpy())
-        all_labels.extend(labels.numpy())
+        all_labels.extend(labels.cpu().numpy())
 
 # 2. Generate the raw confusion matrix array
 cm = confusion_matrix(all_labels, all_preds)
 
 # 3. Print classification report
-print('Classification report\n', classification_report(all_labels, all_preds))
+print('Classification report\n', classification_report(y_true=all_labels, y_pred=all_preds, target_names=class_names))
 # Classification report
 #                precision    recall  f1-score   support
 
-#            0       0.83      0.85      0.84      1000
-#            1       0.90      0.89      0.89      1000
-#            2       0.77      0.74      0.76      1000
-#            3       0.68      0.67      0.67      1000
-#            4       0.78      0.80      0.79      1000
-#            5       0.75      0.73      0.74      1000
-#            6       0.85      0.87      0.86      1000
-#            7       0.84      0.85      0.84      1000
-#            8       0.89      0.88      0.89      1000
-#            9       0.85      0.87      0.86      1000
+#    Butterfly       0.86      0.81      0.84       243
+#          Cat       0.60      0.33      0.42       186
+#      Chicken       0.86      0.83      0.84       462
+#          Cow       0.66      0.59      0.62       284
+#          Dog       0.68      0.82      0.74       722
+#     Elephant       0.71      0.65      0.68       150
+#        Horse       0.74      0.72      0.73       390
+#        Sheep       0.63      0.64      0.64       202
+#       Spider       0.83      0.92      0.88       624
+#     Squirrel       0.73      0.60      0.66       271
 
-#     accuracy                           0.81     10000
-#    macro avg       0.81      0.81      0.81     10000
-# weighted avg       0.81      0.81      0.81     10000
+#     accuracy                           0.75      3534
+#    macro avg       0.73      0.69      0.71      3534
+# weighted avg       0.75      0.75      0.74      3534
         
 import plotly.express as px
-
-# Replace these with your actual class names if you have them 
-# e.g., ['airplane', 'automobile', 'bird', ...]
-class_names = [str(i) for i in range(len(cm))] 
 
 fig = px.imshow(
     cm,
@@ -580,6 +553,24 @@ fig.update_layout(
 
 fig.show()
 
+#----------
+## Visualize some random predicted images (test_set)
+#----------
+
+np.random.seed(43)
+idx_random = np.random.randint(0, test_len+1, 10)
+
+import matplotlib.pyplot as plt
+
+for i in idx_random:
+    print("="*50)
+    idx_original = test_split.indices[i]
+    image = animals_10['image'][idx_original]
+    predict_class = animals_10.features['label'].names[all_preds[i]]
+    plt.title(f"Predicted: {predict_class}")
+    plt.imshow(image)
+    plt.show()
+
 ########################
 ## Saving whole model ##
 ########################
@@ -598,70 +589,3 @@ PARAMS_NAME = "AlexNet_model.pth"
 
 # Save the model (use model.state_dict() to save only the parameters)
 torch.save(obj=model, f=MODEL_PATH.joinpath(PARAMS_NAME))
-
-###############
-## Inference ##
-###############
-
-model_loaded = torch.load(MODEL_PATH.joinpath(PARAMS_NAME), weights_only=False)
-
-_ = model_loaded.eval().to(device)
-
-inference_inputs = []
-for image in val_set['img'][:10]: # Use 10 images only for inference demonstration
-    tensor = preprocess_full(image)
-    inference_inputs.append(tensor.to(device))
-
-print(inference_inputs[0].shape)
-# torch.Size([3, 32, 32])
-
-print(len(inference_inputs))
-# 10
-
-inference_inputs = torch.stack(inference_inputs)
-print(inference_inputs.shape)
-# torch.Size([10, 3, 32, 32])
-
-inference_outputs = model_loaded(inference_inputs)
-print(inference_outputs)
-# tensor([[-1.8792e+01, -1.7055e+01, -1.2150e+01,  2.0642e+01, -1.5233e+01,
-#          -1.3342e+00, -7.5604e+00, -1.5334e+01, -7.7339e+00, -1.3140e+01],
-#         [ 7.4274e-01,  1.1191e+01, -1.3246e+01, -1.0368e+01, -1.7118e+01,
-#          -1.7910e+01, -1.0079e+01, -2.5981e+01,  1.5994e+01, -2.9743e-01],
-#         [-3.5441e+00,  5.6458e+00, -1.2926e+01, -7.3448e+00, -2.1433e+01,
-#          -1.9943e+01, -4.3886e+00, -2.9696e+01,  1.9463e+01,  9.7131e-01],
-#         [ 2.3815e+01, -1.4268e+01, -4.0832e+00, -1.0737e+01, -3.7516e+00,
-#          -3.0416e+01, -2.4778e+01, -1.1626e+01, -8.9818e-01, -8.9371e+00],
-#         [-2.8288e+01, -9.5688e+00, -5.1894e+00, -9.0462e+00, -2.9350e+00,
-#          -1.9445e+01,  3.0575e+01, -3.3225e+01, -1.7907e+01, -9.8912e+00],
-#         [-2.1310e+01, -8.5885e+00,  2.9811e+00, -9.0718e-01, -1.4188e+01,
-#           9.4866e-01,  1.1958e+01, -1.7442e+01, -1.4355e+01, -9.9505e+00],
-#         [-1.0576e+01,  1.6167e+01, -1.6758e+01, -8.1439e+00, -2.6167e+01,
-#          -9.1709e+00, -3.1447e+00, -1.4724e+01, -4.7862e+00,  1.2284e+01],
-#         [-1.2589e+01, -3.1722e+00,  1.9408e-03, -2.4551e+00, -9.9912e+00,
-#          -6.7302e+00,  1.1760e+01, -1.2326e+01, -7.3236e+00, -4.3695e-01],
-#         [-1.4554e+01, -2.5642e+01, -1.3260e+01,  2.1597e+01, -8.6114e+00,
-#          -1.0002e+01, -9.3784e+00, -9.7159e+00, -1.3780e+01, -1.1472e+01],
-#         [-6.2667e+00,  1.8855e+01, -1.2764e+01, -1.1958e+01, -2.0231e+01,
-#          -7.4204e+00, -3.9312e+00, -1.8321e+01,  8.1524e-01,  5.5274e+00]],
-#        device='cuda:0', grad_fn=<AddmmBackward0>)
-
-predicted = torch.argmax(inference_outputs, dim=1)
-print(predicted)
-# tensor([3, 8, 8, 0, 6, 6, 1, 6, 3, 1], device='cuda:0')
-
-print(val_set.features['label'].names)
-# ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-
-#----------
-## Visualize predicted and image
-#----------
-
-import matplotlib.pyplot as plt
-
-for i, image in enumerate(val_set['img'][:10]):
-    print("="*50)
-    predict_class = val_set.features['label'].names[predicted[i]]
-    plt.title(f"Predicted: {predict_class}")
-    plt.imshow(image)
-    plt.show()

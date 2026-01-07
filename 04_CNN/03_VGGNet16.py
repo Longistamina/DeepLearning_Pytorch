@@ -322,8 +322,10 @@ class VGGNet16(nn.Module):
             nn.ReLU(),
             nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        self.fc = nn.Sequential(
             nn.Flatten(),
             
             # Fully connected layers (7*7*512 = 25088 input features)
@@ -340,6 +342,7 @@ class VGGNet16(nn.Module):
         
     def forward(self, X):
         out = self.cnn(X)
+        out = self.fc(out)
         return out
     
 ##########################

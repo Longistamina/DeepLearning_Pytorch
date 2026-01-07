@@ -96,7 +96,7 @@ preprocess = transforms.Compose(
 )
 
 #----
-## Apply preprocess to training set
+## Initial processing
 #----
 
 inputs_train = []
@@ -113,7 +113,7 @@ for record in tqdm(iterable=train_set, desc="Preprocessing Images"):
     inputs_train.append([input_tensor, label_tensor])
 
 #----
-## Re-normalize the pixel values for train set
+## Calculate mean and std after initial preprocessing
 #----
 '''
 Since transforms.ToTensor() normalizes all into [0, 1],
@@ -154,7 +154,7 @@ for idx in tqdm(range(len(inputs_train))):
     inputs_train[idx][0] = input_tensor  # replace with re-normalized tensor
 
 #----
-## Re-normalize the pixel values for val set
+## Re-normalize with calculated mean and std
 #----
 
 preprocess_full = transforms.Compose(
@@ -273,7 +273,7 @@ After Flatten:
 #################
 
 Formula for Conv2d output size:
-    output_size = (input_size - kernel_size + 2×padding) / stride + 1
+    output_size = (input_size - kernel_size + 2*padding) / stride + 1
 '''
 
 ##########################
