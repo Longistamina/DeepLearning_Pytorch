@@ -20,6 +20,6 @@ https://www.youtube.com/watch?v=rhCiuu4AW_w
 https://www.youtube.com/results?search_query=vanishing+gradient
 
 6. ResNet:
-- Explain: https://www.youtube.com/watch?v=w1UsKanMatM
+- Explain: https://www.youtube.com/watch?v=GWt6Fu05voI
 - Pytorch code: https://www.youtube.com/watch?v=DkNIBBBvcPs
 '''
