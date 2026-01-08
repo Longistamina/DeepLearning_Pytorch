@@ -3,16 +3,19 @@
    + With vector
    + With matrix
    
-2. Transpose: torch.t(tensor), tensor.t(), tensor.T
+2. View: tensor.view(*shape_tuple)
+   
+3. Transpose: torch.t(tensor), tensor.t(), tensor.T
    + With 1D vector
    + With 2D vector (row vector <=> column vector)
    + With 2D matrix
    + With 3D tensor (use torch.transpose() or tensor.transpose())
 
-3. View: tensor.view(*shape_tuple)
-
 4. Permute: torch.permute(), tensor.permute()
    + Rearranging multiple dimensions at once.
+   
+5. Swapaxes: torch.swapaxes(), tensor.swapaxes()
+   + Swap two axes/dimensions of the tensor
 '''
 
 import torch
@@ -127,8 +130,23 @@ print(tensor_M.reshape(-1))
 #          2.81,  0.36, -0.09,  0.46])
 '''This is 1D with ndim=1'''
 
+
+#--------------------------------------------------------------------------------------------------------#
+#--------------------------------------------- 2. View --------------------------------------------------#
+#--------------------------------------------------------------------------------------------------------#
+'''
+tensor.view(*shape_tuple) works like reshape, but returns a new tensor sharing the same memory as the original.
+'''
+
+tensor_view = tensor_M.view(3, 8)
+print(tensor_view)
+# tensor([[ 1.31,  0.69, -1.09, -0.36, -0.91, -0.66,  0.08,  0.53],
+#         [ 0.35, -0.20, -1.05,  1.28,  0.15,  0.23,  0.01, -0.14],
+#         [ 0.58, -0.64, -2.21, -0.75,  2.81,  0.36, -0.09,  0.46]])
+
+
 #-----------------------------------------------------------------------------------------------------------#
-#--------------------------------------------- 2. Transpose ------------------------------------------------#
+#--------------------------------------------- 3. Transpose ------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------#
 
 ####################
@@ -271,20 +289,6 @@ dim0 and dim1 are swapped
 '''
 
 
-#--------------------------------------------------------------------------------------------------------#
-#--------------------------------------------- 3. View --------------------------------------------------#
-#--------------------------------------------------------------------------------------------------------#
-'''
-tensor.view(*shape_tuple) works like reshape, but returns a new tensor sharing the same memory as the original.
-'''
-
-tensor_view = tensor_M.view(3, 8)
-print(tensor_view)
-# tensor([[ 1.31,  0.69, -1.09, -0.36, -0.91, -0.66,  0.08,  0.53],
-#         [ 0.35, -0.20, -1.05,  1.28,  0.15,  0.23,  0.01, -0.14],
-#         [ 0.58, -0.64, -2.21, -0.75,  2.81,  0.36, -0.09,  0.46]])
-
-
 #-----------------------------------------------------------------------------------------------------------#
 #------------------------------------------- 4. Permute ----------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------#
@@ -322,3 +326,36 @@ print(permuted.shape)
 # Memory Note: After permute, call .contiguous() if you need to use .view()
 print(permuted.contiguous().view(-1).shape)
 # torch.Size([12])
+
+
+#-----------------------------------------------------------------------------------------------------------#
+#------------------------------------------ 5. SwapAxes ----------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------#
+'''
+torch.swapaxes(input, axis0, axis1) / tensor.swapaxes(axis0, axis1)
+This is an alias for torch.transpose(). It swaps two specific dimensions.
+It is often preferred by those coming from NumPy (np.swapaxes).
+'''
+
+# Create a 3D tensor: (Depth=2, Rows=3, Cols=4)
+torch.manual_seed(42)
+tensor_SA = torch.randn(2, 3, 4)
+print(f"Original shape: {tensor_SA.shape}")
+# Original shape: torch.Size([2, 3, 4])
+
+# Swap the first axis (0) and the second axis (1)
+# New shape should be (3, 2, 4)
+swapped = tensor_SA.swapaxes(0, 1)
+
+print(f"Swapped shape: {swapped.shape}")
+# Swapped shape: torch.Size([3, 2, 4])
+
+# Example with specific axes
+print(torch.swapaxes(tensor_SA, axis0=0, axis1=2).shape)
+# torch.Size([4, 3, 2])
+
+'''
+Note: Like transpose and permute, swapaxes returns a view. 
+If you need the memory to be physicaly reordered (e.g., to use .view() later),
+call .contiguous() after swapping.
+'''

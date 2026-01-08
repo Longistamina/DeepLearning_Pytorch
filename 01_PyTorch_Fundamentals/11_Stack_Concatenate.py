@@ -13,6 +13,10 @@
 
 5. Depth Stack: torch.dstack(tensors)
    + Stacks tensors along the third dimension (depth).
+   
+6. Concatenate: torch.cat(tensors, dim=0) / torch.concatenate(tensors, dim=0)
+   + Joins a sequence of tensors along an EXISTING dimension.
+   + All tensors must have the same shape except in the dimension being concatenated.
 '''
 
 import torch
@@ -22,11 +26,11 @@ t1 = torch.tensor([1, 2, 3])
 t2 = torch.tensor([4, 5, 6])
 
 # Create sample 2D matrices
-m1 = torch.tensor([[1, 1], 
-                   [1, 1]])
+m1 = torch.tensor([[1, 1, 1], 
+                   [1, 1, 1]])
 
-m2 = torch.tensor([[2, 2], 
-                   [2, 2]])
+m2 = torch.tensor([[2, 2, 2], 
+                   [2, 2, 2]])
 
 #-----------------------------------------------------------------------------------------------------------#
 #--------------------------------------------- 1. Stack ----------------------------------------------------#
@@ -47,6 +51,24 @@ print(torch.stack((t1, t2), dim=1))
 #         [3, 6]])
 # Result shape: [3, 2]
 
+###############
+
+print(torch.stack((m1, m2), dim=0))
+# tensor([[[1, 1, 1],
+#          [1, 1, 1]],
+
+#         [[2, 2, 2],
+#          [2, 2, 2]]])
+# torch.Size([2, 2, 3])
+
+print(torch.stack((m1, m2), dim=1))
+# tensor([[[1, 1, 1],
+#          [2, 2, 2]],
+
+#         [[1, 1, 1],
+#          [2, 2, 2]]])
+# torch.Size([2, 2, 3])
+
 
 #-----------------------------------------------------------------------------------------------------------#
 #-------------------------------------- 2. Vertical & Row Stack --------------------------------------------#
@@ -63,10 +85,11 @@ print(torch.vstack((t1, t2)))
 #         [4, 5, 6]])
 
 print(torch.row_stack((m1, m2)))
-# tensor([[1, 1],
-#         [1, 1],
-#         [2, 2],
-#         [2, 2]])
+# tensor([[1, 1, 1],
+#         [1, 1, 1],
+#         [2, 2, 2],
+#         [2, 2, 2]])
+# torch.Size([4, 3])
 
 
 #-----------------------------------------------------------------------------------------------------------#
@@ -82,8 +105,9 @@ print(torch.hstack((t1, t2)))
 # tensor([1, 2, 3, 4, 5, 6])
 
 print(torch.hstack((m1, m2)))
-# tensor([[1, 1, 2, 2],
-#         [1, 1, 2, 2]])
+# tensor([[1, 1, 1, 2, 2, 2],
+#         [1, 1, 1, 2, 2, 2]])
+# torch.Size([2, 6])
 
 
 #-----------------------------------------------------------------------------------------------------------#
@@ -118,8 +142,37 @@ print(torch.dstack((t1, t2)))
 
 print(torch.dstack((m1, m2)))
 # tensor([[[1, 2],
+#          [1, 2],
 #          [1, 2]],
 
 #         [[1, 2],
+#          [1, 2],
 #          [1, 2]]])
-# Result shape: [2, 2, 2]
+# torch.Size([2, 3, 2])
+
+
+#-----------------------------------------------------------------------------------------------------------#
+#------------------------------- 6. Concatenate: torch.cat() / torch.concatenate() -------------------------#
+#-----------------------------------------------------------------------------------------------------------#
+'''
+torch.cat(tensors, dim=0) / torch.concatenate(tensors, dim=0)
+- Joins a sequence of tensors along an EXISTING dimension.
+- All tensors must have the same shape except in the dimension being concatenated.
+'''
+
+# 1D Concatenation
+print(torch.cat((t1, t2), dim=0)) 
+# tensor([1, 2, 3, 4, 5, 6]) -> Stays 1D (Size 6)
+
+# 2D Concatenation (m1, m2 are 2x3)
+# Along Rows (dim=0)
+print(torch.cat((m1, m2), dim=0))
+# tensor([[1, 1, 1],
+#         [1, 1, 1],
+#         [2, 2, 2],
+#         [2, 2, 2]]) -> Shape [4, 3]
+
+# Along Columns (dim=1)
+print(torch.concatenate((m1, m2), dim=1))
+# tensor([[1, 1, 1, 2, 2, 2],
+#         [1, 1, 1, 2, 2, 2]]) -> Shape [2, 6]
