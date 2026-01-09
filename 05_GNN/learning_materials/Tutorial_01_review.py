@@ -1,47 +1,65 @@
 '''
 Officical website: https://antoniolonga.github.io/Pytorch_geometric_tutorials/index.html
 
+github: https://github.com/AntonioLonga/PytorchGeometricTutorial/tree/main?tab=readme-ov-file
+
 Tutorial_01:
 https://www.youtube.com/watch?v=JtDgmmQ60x8&list=PLGMXrbDNfqTzqxB1IGgimuhtfAhGd8lHF
 
 #######################################
 
-The tutorial described in the sources is an introduction to Geometric Deep Learning (GDL) and the PyTorch Geometric framework, 
-presented by Antonio Longa and Gabriele Santin [1, 2]. 
+LECTURE OVERVIEW: INTRODUCTION TO GRAPH NEURAL NETWORKS (GNNs)
 
-According to the sources, GDL is becoming essential in specialized areas like biology, network science, and recommendation systems 
-where data does not fit traditional grid-like structures [1, 3].
+1. THE CORE CONCEPT
+The lecture focuses on how to perform deep learning on graphs.
+Unlike images (fixed grids) or text (sequences), graphs have an arbitrary structure and no fixed ordering of nodes. 
+The goal of a GNN is to learn a numerical vector (an embedding) for every node that captures both its own features 
+and its position/role within the graph structure.
 
-The sources explain that conventional deep learning methods for images or speech cannot be applied to graphs 
-because graphs lack a fixed structure and are not invariant to node ordering [4, 5].
-For example, if the nodes of a graph are reordered, the resulting adjacency matrix changes entirely 
-even if the graph itself remains identical, which confuses standard neural networks [6]. 
-Furthermore, standard networks cannot easily handle the varying sizes of graphs or the addition of new nodes and edges [5, 6].
+2. THE COMPUTATION GRAPH
+For any specific node (let's call it "Node A"), the GNN creates a computation graph based on its local neighborhood. 
+- Layer 0: The initial input features of Node A and its neighbors.
+- Layer 1: Node A aggregates information from its direct neighbors.
+- Layer 2: Node A's neighbors aggregate information from their own neighbors (which are 2 steps away from Node A).
+By stacking K layers, a node can "see" information from K steps away.
 
-The core mechanism of GNNs involves the "computation graph," 
-where each node generates an embedding by aggregating information from its immediate neighbors [7]. 
-This process requires an "order-invariant aggregator," such as a sum or mean, to ensure the calculation is the same 
-regardless of the order in which neighbors are processed [8]. 
+3. THE BASIC MATH OF MESSAGE PASSING
+The process of updating a node's representation involves two main steps: Aggregation and Transformation.
 
-Every node in a graph has its own unique computation graph based on its neighbors, 
-but the trainable weights and biases are shared across the entire network to allow for generalization [8, 9]. 
-The depth of the model determines how many "hops" or layers of neighbors are considered, 
-though the sources suggest that looking too far into the network can collect redundant or irrelevant data [10, 11].
+The mathematical formula for a node "v" at layer "k" is:
 
-A specific model discussed is GraphSAGE, 
-which uses general aggregation functions (like max-pooling) and concatenates a node's own previous state 
-with the aggregated neighborhood data rather than simply summing them [12, 13]. 
+h_v^(k) = SIGMA( W_k * AGGREGATE({ h_u^(k-1) for all u in Neighbors(v) }) + B_k * h_v^(k-1) )
 
-The practical portion of the tutorial demonstrates these concepts using the Cora citation dataset, 
-where papers are nodes and citations are edges [14]. 
-The implementation involves creating a model class in PyTorch Geometric, using SAGEConv layers, 
-and optimizing the network to classify nodes into one of seven categories [14-16].
+Definitions:
+- h_v^(k): The state (embedding) of node v at layer k.
+- h_u^(k-1): The state of a neighbor node u from the previous layer.
+- Neighbors(v): The set of nodes directly connected to v.
+- W_k: A trainable weight matrix applied to neighbor information.
+- B_k: A trainable weight matrix applied to the node's own previous state.
+- SIGMA: A non-linear activation function (usually ReLU).
+- AGGREGATE: A function like Sum, Mean, or Max that handles a variable number of neighbors.
 
-Finally, the sources mention that GNNs are versatile enough to handle node classification, regression, and edge classification [17, 18]. 
-To manage issues like self-loops, practitioners can treat self-edges as distinct connection types or limit the depth of the graph unrolling [18, 19].
+4. GRAPH CONVOLUTIONAL NETWORKS (GCN) SPECIFIC MATH
+In a standard GCN, the aggregation is often a simple normalized mean:
 
-The following analogy is not from the sources: To understand neighborhood aggregation, 
-imagine a social gathering where you want to know the "vibe" of the party; 
-you don't look at the whole room at once, but instead talk to your immediate friends, who each pass on the mood of the people they just spoke to, 
-allowing information to flow to you one "hop" at a time.
+h_v^(k) = SIGMA( W_k * SUM[ h_u^(k-1) / SQRT(Degree(v) * Degree(u)) ] )
+
+Here, Degree(v) is the number of edges connected to node v. 
+This normalization ensures that nodes with many neighbors don't produce massive values that destabilize the neural network.
+
+5. MATRIX FORM (FOR EFFICIENCY)
+To compute this for all nodes at once, we use matrices:
+
+H^(k) = SIGMA( INV(D) * A * H^(k-1) * W_k^T )
+
+Definitions:
+- H^(k): A matrix where each row is a node's embedding at layer k.
+- A: The Adjacency Matrix (1 if nodes are connected, 0 otherwise).
+- INV(D): The inverse of the Degree Matrix (used for averaging).
+- W_k^T: The transposed weight matrix for the layer.
+
+6. KEY TAKEAWAYS
+- Local Neighborhoods: Nodes are defined by their neighbors.
+- Weight Sharing: The same weights (W and B) are used for every node in the graph, making the model scale to very large graphs.
+- Permutation Invariance: Because the AGGREGATE function (like Sum) doesn't care about the order of neighbors, the GNN produces the same result regardless of how nodes are indexed in the data.
 '''
