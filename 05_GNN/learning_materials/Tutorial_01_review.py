@@ -70,6 +70,9 @@ Then watch these two videos too:
 + Understanding GNN (1): https://www.youtube.com/watch?v=fOctJB4kVlM&list=PLV8yxwGOxvvoNkzPfCx2i8an--Tkt7O8Z
 + Understanding GNN (2): https://www.youtube.com/watch?v=ABCGCf8cJOE&list=PLV8yxwGOxvvoNkzPfCx2i8an--Tkt7O8Z&index=2
 
+Then do the codes in this
++ GCN regression example: https://www.youtube.com/watch?v=0YLZXjMHA-8&list=PLV8yxwGOxvvoNkzPfCx2i8an--Tkt7O8Z&index=3
+
 ####################################################################################################
 
 MANUAL GNN CALCULATION EXAMPLE
