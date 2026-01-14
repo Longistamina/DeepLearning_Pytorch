@@ -62,6 +62,6 @@ class Diffusion:
                 x = (1/torch.sqrt(alpha)) * (x - ((1 - alpha)/torch.sqrt(1 - alpha_hat))*predicted_noise) +  torch.sqrt(beta)*noise
         
         _ = model.train()
-        x = (x.clamp(-1, 1) + 1) / 2   # bring back to ranges [0, 1]
+        x = (x.clamp(-1, 1) + 1) / 2   # x.clamp(-1, 1) clips all values into [-1, 1], then (x_clamp + 1)/2 to brings back to [0, 1] range
         x = (x * 255).type(torch.uint8) # convert to RGB pixel values (0-255)
         return x
