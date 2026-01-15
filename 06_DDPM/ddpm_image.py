@@ -1,6 +1,9 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 
 from tqdm.auto import tqdm
 from loguru import logger
@@ -344,10 +347,6 @@ def train(epochs):
     diffusion = Diffusion(img_size=IMG_SIZE, device=device)
     l = len(dataloader)
     
-    max_patience = 10
-    best_loss = float('inf')
-    patience_count = 0
-
     for epoch in tqdm(range(1, epochs+1), desc="Training"):
         
         epoch_loss = 0 # Track loss to give the scheduler a meaningful average
@@ -365,35 +364,11 @@ def train(epochs):
             epoch_loss += loss.item()
             
         avg_loss = epoch_loss / len(dataloader)
-        
         scheduler.step(avg_loss)
-        current_lr = optimizer.param_groups[0]['lr']
-        
-        # Early stop
-        if avg_loss < best_loss:
-            best_loss = avg_loss
-            patient_count = 0
-        else:
-            patience_count += 1
-        if patience_count > max_patience:
-            print("EARLY STOP!!!!!")
-            break
-        
+            
         if (epoch == 1) or (epoch % 10 == 0):
             print("+"*50)
-            print(f"Epoch: {epoch} | Loss: {avg_loss} | Current LR: {current_lr}")
+            print(f"Epoch: {epoch} | Loss: {avg_loss}")
             _, img_list = diffusion.sample(model, n=1)
             fig = create_diffusion_animation(img_list)
-            figh.show()
-#-------
-## Train
-#-------
-
-train(150)
-
-################
-## Save model ##
-################
-
-# Save the entire model
-torch.save(obj=model, f="/home/longdpt/Documents/Long_AISDL/DeepLearning_PyTorch/06_DDPM/pokemon_generator.pth")
+            figh.show()            
